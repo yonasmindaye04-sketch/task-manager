@@ -1,87 +1,72 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { nanoid } from 'nanoid'; // Install with `npm install nanoid`
-
-// Install nanoid for unique IDs: npm install nanoid
-
-export interface Task {
-  id: string;
-  title: string;
-  completed: boolean;
-}
-
-interface TasksState {
-  tasks: Task[];
-  status: 'idle' | 'loading' | 'succeeded' | 'failed';
-  error: string | null;
-  filter: 'all' | 'completed' | 'active';
-}
+import { createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
+import type { Task, TasksState, FilterStatus } from '../../types/task.types';
+import { fetchTasks } from './tasksThunk';
 
 const initialState: TasksState = {
   tasks: [],
-  status: 'idle',
-  error: null,
   filter: 'all',
+  loading: false,
+  error: null,
 };
-
-// Async thunk to fetch tasks
-export const fetchTasks = createAsyncThunk('tasks/fetchTasks', async () => {
-  const response = await fetch('https://jsonplaceholder.typicode.com/todos?_limit=15');
-  if (!response.ok) {
-    throw new Error('Failed to fetch tasks');
-  }
-  const data = await response.json();
-  return data.map((todo: any) => ({
-    id: todo.id.toString(),
-    title: todo.title,
-    completed: todo.completed,
-  })) as Task[];
-});
 
 const tasksSlice = createSlice({
   name: 'tasks',
   initialState,
   reducers: {
     addTask: (state, action: PayloadAction<string>) => {
-      const title = action.payload.trim();
-      if (title.length < 3) return; // Validation
-      state.tasks.push({ id: nanoid(), title, completed: false });
+      const newTask: Task = {
+        id: Date.now(),
+        title: action.payload,
+        completed: false,
+      };
+      state.tasks.push(newTask);
     },
-    toggleTask: (state, action: PayloadAction<string>) => {
+    toggleTask: (state, action: PayloadAction<number>) => {
       const task = state.tasks.find(t => t.id === action.payload);
       if (task) task.completed = !task.completed;
     },
-    editTask: (state, action: PayloadAction<{ id: string; title: string }>) => {
+    // --- ADDED REDUCERS START ---
+    editTask: (state, action: PayloadAction<{ id: number; title: string }>) => {
       const task = state.tasks.find(t => t.id === action.payload.id);
-      if (task && !task.completed) {
-        const title = action.payload.title.trim();
-        if (title.length >= 3) task.title = title;
-      }
+      if (task) task.title = action.payload.title;
     },
-    deleteTask: (state, action: PayloadAction<string>) => {
-      const index = state.tasks.findIndex(t => t.id === action.payload);
-      if (index !== -1 && !state.tasks[index].completed) {
-        state.tasks.splice(index, 1);
-      }
+    deleteTask: (state, action: PayloadAction<number>) => {
+      state.tasks = state.tasks.filter(t => t.id !== action.payload);
     },
-    setFilter: (state, action: PayloadAction<'all' | 'completed' | 'active'>) => {
+    clearError: (state) => {
+      state.error = null;
+    },
+    // --- ADDED REDUCERS END ---
+    setFilter: (state, action: PayloadAction<FilterStatus>) => {
       state.filter = action.payload;
     },
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
-      .addCase(fetchTasks.pending, (state) => {
-        state.status = 'loading';
+      .addCase(fetchTasks.pending, state => {
+        state.loading = true;
+        state.error = null;
       })
       .addCase(fetchTasks.fulfilled, (state, action) => {
-        state.status = 'succeeded';
+        state.loading = false;
         state.tasks = action.payload;
       })
       .addCase(fetchTasks.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message || 'Unknown error';
+        state.loading = false;
+        state.error = action.error.message ?? 'Failed to fetch tasks';
       });
   },
 });
 
-export const { addTask, toggleTask, editTask, deleteTask, setFilter } = tasksSlice.actions;
+// Added editTask, deleteTask, and clearError to the export list below
+export const { 
+  addTask, 
+  toggleTask, 
+  editTask, 
+  deleteTask, 
+  clearError, 
+  setFilter 
+} = tasksSlice.actions;
+
 export default tasksSlice.reducer;

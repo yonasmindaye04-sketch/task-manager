@@ -1,24 +1,31 @@
-import { createAsyncThunk } from "@reduxjs/toolkit";
+/**
+ * Redux Thunks for async task operations
+ */
 
-export interface Task {
-  id: number;
-  title: string;
-  completed: boolean;
-}
+import { createAsyncThunk } from '@reduxjs/toolkit';
+import type { Task } from '../../types/task.types';
 
-export const fetchTasks = createAsyncThunk(
-  "tasks/fetchTasks",
-  async () => {
-    const res = await fetch(
-      "https://jsonplaceholder.typicode.com/todos?_limit=15"
-    );
-    if (!res.ok) throw new Error("Failed to fetch");
-
-    const data = await res.json();
-    return data.map((t: any) => ({
-      id: t.id,
-      title: t.title,
-      completed: t.completed,
-    }));
+/**
+ * Fetch tasks from JSONPlaceholder API
+ * Limits to 15 tasks as per requirements
+ */
+export const fetchTasks = createAsyncThunk<Task[], void, { rejectValue: string }>(
+  'tasks/fetchTasks',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch('https://jsonplaceholder.typicode.com/todos?_limit=15');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch tasks');
+      }
+      
+      const data: Task[] = await response.json();
+      return data;
+    } catch (error) {
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+      return rejectWithValue('An unknown error occurred');
+    }
   }
 );
