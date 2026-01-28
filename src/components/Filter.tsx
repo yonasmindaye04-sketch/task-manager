@@ -1,16 +1,31 @@
-import { useAppDispatch } from "../hooks/reduxHooks";
-import { setFilter } from "../features/tasks/tasksSlice";
+import React from 'react';
 
-export default function Filter() {
-  const dispatch = useAppDispatch();
-
-  return (
-    <div className="flex gap-2">
-      <button onClick={() => dispatch(setFilter("all"))}>All</button>
-      <button onClick={() => dispatch(setFilter("active"))}>Active</button>
-      <button onClick={() => dispatch(setFilter("completed"))}>
-        Completed
-      </button>
-    </div>
-  );
+interface FilterProps {
+  currentFilter: 'all' | 'completed' | 'active';
+  onSetFilter: (filter: 'all' | 'completed' | 'active') => void;
 }
+
+const Filter: React.FC<FilterProps> = ({ currentFilter, onSetFilter }) => (
+  <div className="flex justify-center space-x-4 mb-4">
+    <button
+      onClick={() => onSetFilter('all')}
+      className={currentFilter === 'all' ? 'font-bold' : ''}
+    >
+      All
+    </button>
+    <button
+      onClick={() => onSetFilter('active')}
+      className={currentFilter === 'active' ? 'font-bold' : ''}
+    >
+      Active
+    </button>
+    <button
+      onClick={() => onSetFilter('completed')}
+      className={currentFilter === 'completed' ? 'font-bold' : ''}
+    >
+      Completed
+    </button>
+  </div>
+);
+
+export default Filter;

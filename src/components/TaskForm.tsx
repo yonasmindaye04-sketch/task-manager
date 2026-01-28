@@ -1,27 +1,33 @@
-import { useState } from "react";
-import { useAppDispatch } from "../hooks/reduxHooks";
-import { addTask } from "../features/tasks/tasksSlice";
+import React, { useState } from 'react';
 
-export default function TaskForm() {
-  const [title, setTitle] = useState("");
-  const dispatch = useAppDispatch();
+interface AddTaskFormProps {
+  onAdd: (title: string) => void;
+}
 
-  const submit = () => {
-    if (title.trim().length < 3) return;
-    dispatch(addTask(title.trim()));
-    setTitle("");
+const AddTaskForm: React.FC<AddTaskFormProps> = ({ onAdd }) => {
+  const [title, setTitle] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = title.trim();
+    if (trimmed.length >= 3) {
+      onAdd(trimmed);
+      setTitle('');
+    }
   };
 
   return (
-    <div className="flex gap-2">
+    <form onSubmit={handleSubmit} className="flex mb-4">
       <input
-        className="border p-2 flex-1"
+        type="text"
         value={title}
         onChange={e => setTitle(e.target.value)}
+        placeholder="Add a new task"
+        className="flex-1 border p-2 mr-2"
       />
-      <button onClick={submit} className="bg-blue-600 text-white px-4">
-        Add
-      </button>
-    </div>
+      <button type="submit" className="bg-blue-500 text-white p-2">Add</button>
+    </form>
   );
-}
+};
+
+export default AddTaskForm;

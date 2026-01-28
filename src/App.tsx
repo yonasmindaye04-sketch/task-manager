@@ -1,23 +1,29 @@
-import { useEffect } from "react";
-import { useAppDispatch } from "./hooks/reduxHooks";
-import { fetchTasks } from "./features/tasks/tasksThunk";
-import TaskForm from "./components/TaskForm";
-import TaskList from "./components/TaskList";
-import Filter from "./components/Filter";
+import React, { useEffect } from 'react';
+import { useTasks } from './hooks/useTasks';
+import AddTaskForm from './components/TaskForm.tsx';
+import TaskList from './components/TaskList.tsx';
+import Filter from './components/Filter.tsx';
+import Skeleton from './components/Skeleton.tsx';
 
-export default function App() {
-  const dispatch = useAppDispatch();
+const App: React.FC = () => {
+  const { tasks, status, error, filter, fetchTasks, addTask, toggleTask, editTask, deleteTask, setFilter } = useTasks();
 
   useEffect(() => {
-    dispatch(fetchTasks());
-  }, []);
+    fetchTasks();
+  }, [fetchTasks]);
 
   return (
-    <div className="max-w-xl mx-auto p-4 space-y-4">
-      <h1 className="text-2xl font-bold">Task Manager</h1>
-      <TaskForm />
-      <Filter />
-      <TaskList />
+    <div className="max-w-md mx-auto p-4 bg-white shadow-md rounded">
+      <h1 className="text-2xl font-bold mb-4 text-center">Task Manager</h1>
+      <AddTaskForm onAdd={addTask} />
+      <Filter currentFilter={filter} onSetFilter={setFilter} />
+      {status === 'loading' && <Skeleton />}
+      {status === 'failed' && <p className="text-red-500 text-center">{error}</p>}
+      {status === 'succeeded' && (
+        <TaskList tasks={tasks} onToggle={toggleTask} onEdit={editTask} onDelete={deleteTask} />
+      )}
     </div>
   );
-}
+};
+
+export default App;
